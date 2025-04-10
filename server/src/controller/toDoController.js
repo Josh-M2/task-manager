@@ -2,7 +2,9 @@ import Todo from "../model/toDoModel.js";
 
 export const getAllTodos = async (req, res) => {
   try {
+    console.log("getting all task");
     const todos = await Todo.find().sort({ createdDate: -1 });
+    console.log("task: ", todos)
     res.json(todos);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -11,6 +13,8 @@ export const getAllTodos = async (req, res) => {
 
 export const createTodo = async (req, res) => {
   try {
+    const { title, description, priority, category, dueDate } = req.body;
+    console.log("creating task", req.body);
     const todo = new Todo(req.body);
     const savedTodo = await todo.save();
     res.status(201).json(savedTodo);

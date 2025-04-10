@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,14 +31,49 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ui/theme-provider";
 import TaskInputForm from "./TaskInputForm";
+import { TaskTypes } from "@/types/todoTypes";
+import { initTodoList } from "@/services/toDoServices";
+import { parseISO, format } from 'date-fns';
 
 const ShowTask: React.FC = () => {
-  const [isHovered, setisHovered] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const contentRef = useRef<(HTMLDivElement | null)[]>([]);
   const { setTheme } = useTheme();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [tasks, setTasks] = useState<TaskTypes[]>([]);
 
-  const toggle = () => {
-    setisHovered(!isHovered);
+  useEffect(()=>{
+    const initialFetchOfToDoList = async () => {
+      try {
+        const response = await initTodoList();
+        if(response){
+          setTasks(response);
+          console.log("initTODOLIST: ", response);
+        } 
+      } catch (error:any) {
+        console.log(error.message)
+        
+      }
+    }
+    initialFetchOfToDoList();
+  },[])
+
+
+  useEffect(()=>{
+    console.log("initTODOLIST: ", typeof tasks);
+  },[tasks])
+
+  useEffect(()=>{
+    console.log("contentRef: ", contentRef);
+  },[contentRef])
+
+  const handleDialog = ()=>{
+    setIsOpen(false);
+  }
+
+  const getFormattedDate = (date: string | Date): string => {
+    const safeDate = typeof date === "string" ? parseISO(date) : date;
+    return format(safeDate, "MMMM dd, yyyy");
   };
 
   return (
@@ -86,40 +121,41 @@ const ShowTask: React.FC = () => {
         <CardContent className="overflow-auto">
           <div>
             <ul>
-              <li className="py-1">
+           {tasks && tasks.map((item, index)=>(
+            <li className="py-1" key={index}>
                 <Card
                   className="w-100vh h-fit p-3 flex flex-row items-start !gap-x-0 cursor-pointer"
-                  onMouseEnter={toggle}
-                  onMouseLeave={toggle}
+                  onMouseEnter={()=>setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
                 >
                   <div className="flex flex-col items-start w-full max-w-xs gap-y-2">
                     <h1 className="w-full break-words font-bold text-md text-start">
-                      Title Title Title Title Title Title Title Title
+                      {item.title}
                     </h1>
                     <p className="w-full break-words text-start md:text-sm">
-                      Description Description Description DescriptionDescri
-                      Description Description Description
+                    {item.description}
                     </p>
-                    <p className="w-full break-words text-start md:text-xs px-3 py-1 bg-green-500 !w-fit rounded-md">
-                      LOW
-                    </p>
-                    <p className="w-full break-words text-start md:text-sm text-gray-500 !w-fit rounded-md">
-                      Due date:
+                    <p className={`w-full break-words text-start md:text-xs px-3 py-1 !w-fit rounded-md 
+                      ${item.priority === "low" ? "bg-green-500": item.priority === "medium" ? "bg-orange-500" : "bg-red-500"}`}>
+                     {item.priority}
                     </p>
                     <p className="w-full break-words text-start md:text-sm text-gray-500 !w-fit rounded-md">
-                      Date created:
+                      Due date: {getFormattedDate(item.dueDate)}
+                    </p>
+                    <p className="w-full break-words text-start md:text-sm text-gray-500 !w-fit rounded-md">
+                      Date created: {getFormattedDate(item.createdDate)}
                     </p>
 
                     <div
-                      ref={contentRef}
+                      ref={(el)=>{contentRef.current[index] = el}}
                       style={{
-                        maxHeight: isHovered
-                          ? `${contentRef.current?.scrollHeight}px`
+                        maxHeight: hoveredIndex === index
+                          ? `${contentRef.current[index]?.scrollHeight}px`
                           : "0px",
                         overflow: "hidden",
                         transition: "max-height 0.3s ease-out",
                       }}
-                      className="w-full"
+                      className={`w-full transition-all duration-300 ease-out overflow-hidden ${hoveredIndex === index ? contentRef.current[index]?.scrollHeight : '0'}px`}
                     >
                       <div className="w-full mt-1 p-1 rounded-b-md flex justify-center gap-x-2">
                         <Button variant="outline" className="px-3 py-1 rounded">
@@ -163,61 +199,13 @@ const ShowTask: React.FC = () => {
                   </div>
                 </Card>
               </li>
-              <li className="py-1">
-                <Card
-                  className="w-100vh h-fit p-3 flex flex-row items-start !gap-x-0 cursor-pointer"
-                  onMouseEnter={toggle}
-                  onMouseLeave={toggle}
-                >
-                  <div className="flex flex-col items-start w-full max-w-xs gap-y-2">
-                    <h1 className="w-full break-words font-bold text-md text-start">
-                      Title Title Title Title Title Title Title Title
-                    </h1>
-                    <p className="w-full break-words text-start md:text-sm">
-                      Description Description Description DescriptionDescri
-                      Description Description Description
-                    </p>
-                    <p className="w-full break-words text-start md:text-xs px-3 py-1 bg-green-500 !w-fit rounded-md">
-                      LOW
-                    </p>
-                    <p className="w-full break-words text-start md:text-sm text-gray-500 !w-fit rounded-md">
-                      Due date:
-                    </p>
-                    <p className="w-full break-words text-start md:text-sm text-gray-500 !w-fit rounded-md">
-                      Date created:
-                    </p>
-
-                    <div
-                      ref={contentRef}
-                      style={{
-                        maxHeight: isHovered
-                          ? `${contentRef.current?.scrollHeight}px`
-                          : "0px",
-                        overflow: "hidden",
-                        transition: "max-height 0.3s ease-out",
-                      }}
-                      className="w-full"
-                    >
-                      <div className="w-full mt-1 p-1 rounded-b-md flex justify-center gap-x-2">
-                        <Button variant="outline" className="px-3 py-1 rounded">
-                          <EditSVG />
-                        </Button>
-                        <Button variant="outline" className="px-3 py-1 rounded">
-                          Doing
-                        </Button>
-                        <Button variant="outline" className="px-3 py-1 rounded">
-                          Done
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </li>
+           ))}
+              
             </ul>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
-          <Dialog>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="font-bold">
                 <PlusSVG />
@@ -231,10 +219,9 @@ const ShowTask: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <TaskInputForm />
-              <DialogFooter>
-                <Button type="submit">Save task</Button>
-              </DialogFooter>
+              <TaskInputForm handleDialog = {handleDialog}/>
+
+             
             </DialogContent>
           </Dialog>
         </CardFooter>
