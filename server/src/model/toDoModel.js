@@ -19,9 +19,16 @@ const todoSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-  category: ["todo", "doing", "done"],
+  category:{
+    type: String,
+    enum: ["todo", "doing", "done"],
+    default: "todo",
+  },
 });
 
 const Todo = mongoose.model("Todo", todoSchema);
 
 export default Todo;
+
+
+
