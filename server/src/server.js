@@ -14,6 +14,8 @@ app.use(express.json());
 
 connectDB();
 
+app.use("/api/todos", toDoRoutes);
+
 const port = process.env.PORT || 5174;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
