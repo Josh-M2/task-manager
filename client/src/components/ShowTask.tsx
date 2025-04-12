@@ -40,7 +40,18 @@ const ShowTask: React.FC = () => {
   const contentRef = useRef<(HTMLDivElement | null)[]>([]);
   const { setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpenEdit, setIsOpenEdit] = useState<boolean>(false);
+  const [isOpenDelete, setIsOpenDelete] = useState<boolean>(false);
+
+
   const [tasks, setTasks] = useState<TaskTypes[]>([]);
+   const [date, setDate] = React.useState<Date>();
+   const [selectedTaskIndexEdit, setselectedTaskIndexEdit] = useState<number | null>(null);
+   const [selectedTaskIndexDelete, setselectedTaskIndexDelete] = useState<number | null>(null);
+   const [selectedTaskIndexDoing, setselectedTaskIndexDoing] = useState<number | null>(null);
+   const [selectedTaskIndexDone, setselectedTaskIndexDone] = useState<number | null>(null);
+
+
 
   useEffect(()=>{
     const initialFetchOfToDoList = async () => {
@@ -60,21 +71,27 @@ const ShowTask: React.FC = () => {
 
 
   useEffect(()=>{
-    console.log("initTODOLIST: ", typeof tasks);
-  },[tasks])
+    console.log("hover index: ", hoveredIndex);
+  },[hoveredIndex])
 
-  useEffect(()=>{
-    console.log("contentRef: ", contentRef);
-  },[contentRef])
-
-  const handleDialog = ()=>{
+  const handleDialogCreate = ()=>{
     setIsOpen(false);
+  }
+
+  const handleDialogEdit = ()=>{
+    setIsOpenEdit(false);
+  }
+
+  const handleDialogdelete = ()=>{
+    setIsOpenDelete(false);
   }
 
   const getFormattedDate = (date: string | Date): string => {
     const safeDate = typeof date === "string" ? parseISO(date) : date;
     return format(safeDate, "MMMM dd, yyyy");
   };
+
+  
 
   return (
     <div className="flex justify-center items-center">
@@ -126,7 +143,7 @@ const ShowTask: React.FC = () => {
                 <Card
                   className="w-100vh h-fit p-3 flex flex-row items-start !gap-x-0 cursor-pointer"
                   onMouseEnter={()=>setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                   onMouseLeave={() => setHoveredIndex(null)}
                 >
                   <div className="flex flex-col items-start w-full max-w-xs gap-y-2">
                     <h1 className="w-full break-words font-bold text-md text-start">
@@ -158,9 +175,40 @@ const ShowTask: React.FC = () => {
                       className={`w-full transition-all duration-300 ease-out overflow-hidden ${hoveredIndex === index ? contentRef.current[index]?.scrollHeight : '0'}px`}
                     >
                       <div className="w-full mt-1 p-1 rounded-b-md flex justify-center gap-x-2">
-                        <Button variant="outline" className="px-3 py-1 rounded">
-                          <EditSVG />
-                        </Button>
+                        <Dialog open = {selectedTaskIndexEdit === index} 
+                        onOpenChange={(open) => {
+                          if (open) {
+                            setselectedTaskIndexEdit(index);
+                          } else {
+                            setselectedTaskIndexEdit(null);
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                          <Button variant="outline" className="px-3 py-1 rounded">
+                            <EditSVG />
+                          </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]"
+                          >
+                            <DialogHeader>
+                              <DialogTitle>Edit Task</DialogTitle>
+                              <DialogDescription>
+                              Edit your task here, press save if your done.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <TaskInputForm
+                            handleDialogEdit={() => setselectedTaskIndexEdit(null)}
+                            id={item._id}
+                            title={item.title}
+                            description={item.description}
+                            priority={item.priority}
+                            category = {item.category}
+                            dueDate={item.dueDate}
+                            createdDate={item.createdDate} 
+                            />                          
+                        </DialogContent>
+                        </Dialog>
                         <Button variant="outline" className="px-3 py-1 rounded">
                           Doing
                         </Button>
@@ -168,7 +216,13 @@ const ShowTask: React.FC = () => {
                           Done
                         </Button>
 
-                        <Dialog>
+                       <Dialog open={selectedTaskIndexDelete ===index} onOpenChange={(open)=>{
+                        if(open){
+                          setselectedTaskIndexDelete(index);
+                        } else {
+                          setselectedTaskIndexDelete(null)
+                        }
+                       }}>
                           <DialogTrigger asChild>
                             <Button variant="destructive">
                               <TrashBinSVG />
@@ -192,9 +246,8 @@ const ShowTask: React.FC = () => {
                               </DialogClose>
                             </DialogFooter>
                           </DialogContent>
-                        </Dialog>
+                        </Dialog> 
                       </div>
-                      <div></div>
                     </div>
                   </div>
                 </Card>
@@ -219,7 +272,7 @@ const ShowTask: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <TaskInputForm handleDialog = {handleDialog}/>
+              <TaskInputForm handleDialogCreate = {handleDialogCreate}/>
 
              
             </DialogContent>
