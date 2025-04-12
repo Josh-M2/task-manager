@@ -8,7 +8,7 @@ const todoSchema = new Schema({
     required: true,
     trim: true,
   },
-  description: String,
+  description: { type: String, reuired: true, trim: true },
   priority: {
     type: String,
     enum: ["low", "medium", "high"],
@@ -19,7 +19,7 @@ const todoSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-  category:{
+  category: {
     type: String,
     enum: ["todo", "doing", "done"],
     default: "todo",
@@ -29,6 +29,3 @@ const todoSchema = new Schema({
 const Todo = mongoose.model("Todo", todoSchema);
 
 export default Todo;
-
-
-
