@@ -37,7 +37,7 @@ const MainPage: React.FC = () => {
   return (
     <div className="flex gap-2">
       {/* <TaskInputForm /> */}
-      <ShowTask toDoList={toDoList} />
+      <ShowTask toDoList={toDoList} setToDoList={setToDoList} />
       <ShowDoing doingList={doingList} />
       <ShowDone doneList={doneList} />
     </div>

@@ -31,11 +31,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ui/theme-provider";
 import TaskInputForm from "./TaskInputForm";
-import { ShowTaskTypes } from "@/types/todoTypes";
+import { ShowTaskTypes, TaskTypes } from "@/types/todoTypes";
 import { addToDoing, addToDone, deleteById } from "@/services/toDoServices";
 import { getFormattedDate } from "@/lib/date";
 
-const ShowTask: React.FC<ShowTaskTypes> = ({ toDoList }) => {
+const ShowTask: React.FC<ShowTaskTypes> = ({ toDoList, setToDoList }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const contentRef = useRef<(HTMLDivElement | null)[]>([]);
   const { setTheme } = useTheme();
@@ -80,6 +80,71 @@ const ShowTask: React.FC<ShowTaskTypes> = ({ toDoList }) => {
     }
   };
 
+  const handleSort = async (by: string) => {
+    let sortedList: TaskTypes[] | undefined = [];
+    const prioComparison: Record<TaskTypes["priority"], number> = {
+      high: 0,
+      medium: 1,
+      low: 2,
+    };
+    switch (by) {
+      case "prioHigh":
+        console.log("sorting 1");
+
+        sortedList =
+          toDoList
+            ?.slice()
+            .sort(
+              (a, b) => prioComparison[a.priority] - prioComparison[b.priority]
+            ) || [];
+        break;
+      case "prioLow":
+        console.log("sorting 2");
+
+        sortedList =
+          toDoList
+            ?.slice()
+            .sort(
+              (a, b) => prioComparison[b.priority] - prioComparison[a.priority]
+            ) || [];
+        break;
+
+      case "due":
+        sortedList = toDoList
+          ?.slice()
+          .sort(
+            (a, b) =>
+              new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+          );
+        break;
+
+      case "createdASC":
+        sortedList = toDoList
+          ?.slice()
+          .sort(
+            (a, b) =>
+              new Date(a.createdDate).getTime() -
+              new Date(b.createdDate).getTime()
+          );
+        break;
+
+      case "createdDESC":
+        sortedList = toDoList
+          ?.slice()
+          .sort(
+            (a, b) =>
+              new Date(b.createdDate).getTime() -
+              new Date(a.createdDate).getTime()
+          );
+        break;
+
+      default:
+        break;
+    }
+
+    sortedList && setToDoList?.(sortedList);
+  };
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[350px] h-[80vh] flex flex-col justify-between">
@@ -96,9 +161,21 @@ const ShowTask: React.FC<ShowTaskTypes> = ({ toDoList }) => {
                 <DropdownMenuSubTrigger>Sort by</DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
-                    <DropdownMenuItem>Tag</DropdownMenuItem>
-                    <DropdownMenuItem>Due Date</DropdownMenuItem>
-                    <DropdownMenuItem>Date Created</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSort("prioHigh")}>
+                      Priority (high - low)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSort("prioLow")}>
+                      Priority (low - high)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSort("due")}>
+                      Due Date
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSort("createdASC")}>
+                      Date Created ASC
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSort("createdDESC")}>
+                      Date Created DESC
+                    </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
