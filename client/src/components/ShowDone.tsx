@@ -31,16 +31,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ui/theme-provider";
 import TaskInputForm from "./TaskInputForm";
-import { ShowTaskTypes, TaskTypes } from "@/types/todoTypes";
-import {
-  addToDo,
-  addToDoing,
-  addToDone,
-  deleteById,
-} from "@/services/toDoServices";
+import { TypesOfShowTaskComponent } from "@/types/todoTypes";
+import { deleteById } from "@/services/toDoServices";
 import { getFormattedDate } from "@/lib/date";
+import { handleMoveTask } from "@/lib/moveTask";
+import { sortList } from "@/lib/sort";
+import { Skeleton } from "./ui/skeleton";
 
-const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
+const ShowDone: React.FC<TypesOfShowTaskComponent> = ({
+  doneList,
+  setDoneList,
+  loadingInit,
+}) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const contentRef = useRef<(HTMLDivElement | null)[]>([]);
   const { setTheme } = useTheme();
@@ -66,99 +68,11 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
     }
   };
 
-  const handleDialogDoing = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDoing(id);
-      response && console.log("added to doing");
-    } catch (error: any) {
-      console.error(error.message);
+  const handleSort = (by: string) => {
+    if (doneList) {
+      const response = sortList(doneList, by);
+      if (response) setDoneList?.(response);
     }
-  };
-
-  const handleDialogDone = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDone(id);
-      response && console.log("added to done");
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  };
-
-  const handleDialogToDo = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDo(id);
-      response && console.log("added to to do list");
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  };
-
-  const handleSort = async (by: string) => {
-    let sortedList: TaskTypes[] | undefined = [];
-    const prioComparison: Record<TaskTypes["priority"], number> = {
-      high: 0,
-      medium: 1,
-      low: 2,
-    };
-    switch (by) {
-      case "prioHigh":
-        console.log("sorting 1");
-
-        sortedList =
-          doneList
-            ?.slice()
-            .sort(
-              (a, b) => prioComparison[a.priority] - prioComparison[b.priority]
-            ) || [];
-        break;
-      case "prioLow":
-        console.log("sorting 2");
-
-        sortedList =
-          doneList
-            ?.slice()
-            .sort(
-              (a, b) => prioComparison[b.priority] - prioComparison[a.priority]
-            ) || [];
-        break;
-
-      case "due":
-        sortedList = doneList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-          );
-        break;
-
-      case "createdASC":
-        sortedList = doneList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(a.createdDate).getTime() -
-              new Date(b.createdDate).getTime()
-          );
-        break;
-
-      case "createdDESC":
-        sortedList = doneList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(b.createdDate).getTime() -
-              new Date(a.createdDate).getTime()
-          );
-        break;
-
-      default:
-        break;
-    }
-
-    sortedList && setDoneList?.(sortedList);
   };
 
   return (
@@ -218,7 +132,14 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
         <CardContent className="overflow-auto">
           <div>
             <ul>
-              {doneList &&
+              {loadingInit ? (
+                <div className="flex flex-col gap-y-2">
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                </div>
+              ) : (
+                doneList &&
                 doneList.map((item, index) => (
                   <li className="py-1" key={index}>
                     <Card
@@ -310,7 +231,7 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
                             <Button
                               variant="outline"
                               className="px-3 py-1 rounded"
-                              onClick={() => handleDialogDoing(item._id)}
+                              onClick={() => handleMoveTask(item._id, "doing")}
                             >
                               Doing
                             </Button>
@@ -318,7 +239,7 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
                             <Button
                               variant="outline"
                               className="px-3 py-1 rounded"
-                              onClick={() => handleDialogToDo(item._id)}
+                              onClick={() => handleMoveTask(item._id, "todo")}
                             >
                               Undone
                             </Button>
@@ -369,7 +290,8 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
                       </div>
                     </Card>
                   </li>
-                ))}
+                ))
+              )}
             </ul>
           </div>
         </CardContent>
@@ -388,7 +310,10 @@ const ShowDone: React.FC<ShowTaskTypes> = ({ doneList, setDoneList }) => {
                 </DialogDescription>
               </DialogHeader>
 
-              <TaskInputForm handleDialogCreate={handleDialogCreate} />
+              <TaskInputForm
+                handleDialogCreate={handleDialogCreate}
+                category="done"
+              />
             </DialogContent>
           </Dialog>
         </CardFooter>

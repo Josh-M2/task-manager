@@ -4,7 +4,7 @@ export const getAllTodos = async (req, res) => {
   try {
     console.log("getting all task");
     const todos = await Todo.find().sort({ createdDate: -1 });
-    console.log("task: ", todos);
+    // console.log("all task", todos);
     res.status(201).json(todos);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -13,16 +13,17 @@ export const getAllTodos = async (req, res) => {
 
 export const createTodo = async (req, res) => {
   try {
-    const { title, description, priority, dueDate } = req.body;
+    const socket = req.app.get("socket");
     console.log("creating task body", req.body);
-    const todo = new Todo({
-      title: title,
-      description: description,
-      priority: priority,
-      dueDate: dueDate,
-    });
+
+    const todo = new Todo(req.body);
     console.log("new todo", todo);
+
     const savedTodo = await todo.save();
+    console.log("savedTodo", savedTodo);
+
+    savedTodo && socket.emit("updateTask", savedTodo);
+
     res.status(201).json(savedTodo);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -77,54 +78,23 @@ export const deleteTodo = async (req, res) => {
   }
 };
 
-export const addToDoing = async (req, res) => {
-  try {
-    console.log("adding to doing list ");
-    const updated = await Todo.findByIdAndUpdate(
-      req.params.id,
-      { category: "doing" },
-      {
-        new: true,
-      }
-    );
-    if (!updated) return res.status(404).json({ message: "Todo not found" });
-    console.log("added to doing list ");
-    res.status(201).json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
+export const moveTask = async (req, res) => {
+  //access the suck it from main shit
+  const socket = req.app.get("socket");
 
-export const addToDo = async (req, res) => {
   try {
     console.log("adding to doing list ");
+    const { toCategory } = req.body.params;
+    console.log("move task to category", toCategory);
     const updated = await Todo.findByIdAndUpdate(
       req.params.id,
-      { category: "todo" },
+      { category: toCategory },
       {
         new: true,
       }
     );
     if (!updated) return res.status(404).json({ message: "Todo not found" });
-    console.log("added to doing list ");
-    res.status(201).json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-export const addToDone = async (req, res) => {
-  try {
-    console.log("adding to doing list ");
-    const updated = await Todo.findByIdAndUpdate(
-      req.params.id,
-      { category: "done" },
-      {
-        new: true,
-      }
-    );
-    if (!updated) return res.status(404).json({ message: "Todo not found" });
-    console.log("added to doing list ");
+    socket.emit("updateTask", updated);
     res.status(201).json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });

@@ -7,9 +7,7 @@ import {
   updateTodo,
   deleteTodo,
   getTodoByCategory,
-  addToDoing,
-  addToDone,
-  addToDo,
+  moveTask,
 } from "../controller/toDoController.js";
 
 const router = Router();
@@ -19,9 +17,7 @@ router.get("/:id", getTodoById);
 router.get("/todo", getTodoByCategory);
 
 router.put("/:id", updateTodo);
-router.put("/doing/:id", addToDoing);
-router.put("/done/:id", addToDone);
-router.put("/todo/:id", addToDo);
+router.put("/move-task/:id", moveTask);
 
 router.post("/", createTodo);
 

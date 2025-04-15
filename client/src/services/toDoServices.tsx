@@ -1,13 +1,13 @@
 import axiosInstance from "./axiosInstance";
-import { TaskTypes } from "@/types/todoTypes";
+import { CleanerForTaskTypes, TaskTypes } from "@/types/todoTypes";
 
 export const createTask = async (
-  newTask: TaskTypes
+  newTask: CleanerForTaskTypes
 ): Promise<TaskTypes | {}> => {
   console.log("forwarded to funct", newTask);
   try {
     const response = await axiosInstance.post("/todos/", newTask);
-    console.log(createTask, "createTask");
+    console.log("createTask", createTask);
     if (response.data) {
       return response.data;
     }
@@ -50,29 +50,17 @@ export const updateTask = async (
   return {};
 };
 
-export const addToDoing = async (id: string): Promise<{}> => {
+export const moveTask = async (
+  id: string,
+  toCategory: TaskTypes["category"]
+): Promise<{}> => {
   try {
-    const response = await axiosInstance.put(`/todos/doing/${id}`);
-    if (response.data) return response.data;
-  } catch (error: any) {
-    console.error(error.message);
-  }
-  return {};
-};
-
-export const addToDone = async (id: string): Promise<{}> => {
-  try {
-    const response = await axiosInstance.put(`/todos/done/${id}`);
-    if (response.data) return response.data;
-  } catch (error: any) {
-    console.error(error.message);
-  }
-  return {};
-};
-
-export const addToDo = async (id: string): Promise<{}> => {
-  try {
-    const response = await axiosInstance.put(`/todos/todo/${id}`);
+    const response = await axiosInstance.put(`/todos/move-task/${id}`, {
+      params: {
+        toCategory: toCategory,
+      },
+    });
+    response.data && console.log("added to ", response.data);
     if (response.data) return response.data;
   } catch (error: any) {
     console.error(error.message);

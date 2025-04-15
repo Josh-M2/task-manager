@@ -20,12 +20,13 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { createTask, updateTask } from "@/services/toDoServices";
 import { TaskTypes } from "@/types/todoTypes";
-import { TaskInputTypes } from "@/types/todoTypes";
+import { TypesOfTaskInputComponent } from "@/types/todoTypes";
 
-const TaskInputForm: React.FC<TaskInputTypes> = ({
+const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
   handleDialogCreate,
   handleDialogEdit,
   selectedTask,
+  category,
 }) => {
   const [theSelectedTask, setTheSelectedTask] = useState<TaskTypes | null>();
   const [date, setDate] = React.useState<Date | undefined>(() => {
@@ -51,6 +52,13 @@ const TaskInputForm: React.FC<TaskInputTypes> = ({
   useEffect(() => {
     localStorage.setItem("consistent-task", JSON.stringify(newTask));
   }, [newTask]);
+
+  useEffect(() => {
+    setNewTask((prev) => ({
+      ...prev,
+      category: category as "todo" | "doing" | "done",
+    }));
+  }, [category]);
 
   useEffect(() => {
     if (selectedTask) setTheSelectedTask(selectedTask);
@@ -101,7 +109,8 @@ const TaskInputForm: React.FC<TaskInputTypes> = ({
     // }
 
     try {
-      const response = await createTask(newTask);
+      const { _id, createdDate, ...cleanedTypes } = newTask;
+      const response = await createTask(cleanedTypes);
       response && console.log("created: ", response);
 
       handleDialogCreate && handleDialogCreate();

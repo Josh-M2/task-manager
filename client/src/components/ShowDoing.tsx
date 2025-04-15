@@ -31,16 +31,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ui/theme-provider";
 import TaskInputForm from "./TaskInputForm";
-import { ShowTaskTypes, TaskTypes } from "@/types/todoTypes";
-import {
-  addToDo,
-  addToDoing,
-  addToDone,
-  deleteById,
-} from "@/services/toDoServices";
+import { TypesOfShowTaskComponent, TaskTypes } from "@/types/todoTypes";
+import { deleteById } from "@/services/toDoServices";
 import { getFormattedDate } from "@/lib/date";
+import { handleMoveTask } from "@/lib/moveTask";
+import { sortList } from "@/lib/sort";
+import { Skeleton } from "./ui/skeleton";
 
-const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
+const showDoing: React.FC<TypesOfShowTaskComponent> = ({
+  doingList,
+  setDoingList,
+  loadingInit,
+}) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const contentRef = useRef<(HTMLDivElement | null)[]>([]);
   const { setTheme } = useTheme();
@@ -65,100 +67,12 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
       console.error(error.message);
     }
   };
-
-  const handleDialogDoing = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDoing(id);
-      response && console.log("added to doing");
-    } catch (error: any) {
-      console.error(error.message);
+  const handleSort = (by: string) => {
+    if (doingList) {
+      const response = sortList(doingList, by);
+      console.log("response sorted", response);
+      if (response) setDoingList?.(response);
     }
-  };
-
-  const handleDialogDone = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDone(id);
-      response && console.log("added to doing");
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  };
-
-  const handleDialogToDo = async (id: string) => {
-    try {
-      console.log("handle doing", id);
-      const response = await addToDo(id);
-      response && console.log("added to doing");
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  };
-
-  const handleSort = async (by: string) => {
-    let sortedList: TaskTypes[] | undefined = [];
-    const prioComparison: Record<TaskTypes["priority"], number> = {
-      high: 0,
-      medium: 1,
-      low: 2,
-    };
-    switch (by) {
-      case "prioHigh":
-        console.log("sorting 1");
-
-        sortedList =
-          doingList
-            ?.slice()
-            .sort(
-              (a, b) => prioComparison[a.priority] - prioComparison[b.priority]
-            ) || [];
-        break;
-      case "prioLow":
-        console.log("sorting 2");
-
-        sortedList =
-          doingList
-            ?.slice()
-            .sort(
-              (a, b) => prioComparison[b.priority] - prioComparison[a.priority]
-            ) || [];
-        break;
-
-      case "due":
-        sortedList = doingList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-          );
-        break;
-
-      case "createdASC":
-        sortedList = doingList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(a.createdDate).getTime() -
-              new Date(b.createdDate).getTime()
-          );
-        break;
-
-      case "createdDESC":
-        sortedList = doingList
-          ?.slice()
-          .sort(
-            (a, b) =>
-              new Date(b.createdDate).getTime() -
-              new Date(a.createdDate).getTime()
-          );
-        break;
-
-      default:
-        break;
-    }
-
-    sortedList && setDoingList?.(sortedList);
   };
 
   return (
@@ -218,7 +132,14 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
         <CardContent className="overflow-auto">
           <div>
             <ul>
-              {doingList &&
+              {loadingInit ? (
+                <div className="flex flex-col gap-y-2">
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                  <Skeleton className="h-[143px] w-[285px] rounded-xl" />
+                </div>
+              ) : (
+                doingList &&
                 doingList.map((item, index) => (
                   <li className="py-1" key={index}>
                     <Card
@@ -235,13 +156,13 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
                         </p>
                         <p
                           className={`w-full break-words text-start md:text-xs px-3 py-1 !w-fit rounded-md 
-                      ${
-                        item.priority === "low"
-                          ? "bg-green-500"
-                          : item.priority === "medium"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
+                        ${
+                          item.priority === "low"
+                            ? "bg-green-500"
+                            : item.priority === "medium"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
                         >
                           {item.priority}
                         </p>
@@ -310,7 +231,7 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
                             <Button
                               variant="outline"
                               className="px-3 py-1 rounded"
-                              onClick={() => handleDialogToDo(item._id)}
+                              onClick={() => handleMoveTask(item._id, "todo")}
                             >
                               Undoing
                             </Button>
@@ -318,7 +239,7 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
                             <Button
                               variant="outline"
                               className="px-3 py-1 rounded"
-                              onClick={() => handleDialogDone(item._id)}
+                              onClick={() => handleMoveTask(item._id, "done")}
                             >
                               Done
                             </Button>
@@ -369,7 +290,8 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
                       </div>
                     </Card>
                   </li>
-                ))}
+                ))
+              )}
             </ul>
           </div>
         </CardContent>
@@ -388,7 +310,10 @@ const showDoing: React.FC<ShowTaskTypes> = ({ doingList, setDoingList }) => {
                 </DialogDescription>
               </DialogHeader>
 
-              <TaskInputForm handleDialogCreate={handleDialogCreate} />
+              <TaskInputForm
+                handleDialogCreate={handleDialogCreate}
+                category="doing"
+              />
             </DialogContent>
           </Dialog>
         </CardFooter>
