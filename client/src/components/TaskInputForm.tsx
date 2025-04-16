@@ -21,6 +21,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { createTask, updateTask } from "@/services/toDoServices";
 import { TaskTypes } from "@/types/todoTypes";
 import { TypesOfTaskInputComponent } from "@/types/todoTypes";
+import { isValidTask, validateNewTask } from "@/lib/inputValidator";
 
 const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
   handleDialogCreate,
@@ -36,18 +37,27 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
 
   const [newTask, setNewTask] = useState<TaskTypes>(() => {
     const savednewTask = localStorage.getItem("consistent-task");
-    return savednewTask
-      ? JSON.parse(savednewTask)
-      : {
-          _id: "",
-          title: "",
-          description: "",
-          priority: "",
-          category: "",
-          dueDate: "",
-          createdDate: "",
-        };
+
+    try {
+      const parsedTask = savednewTask ? JSON.parse(savednewTask) : null;
+      if (parsedTask && isValidTask(parsedTask)) {
+        return parsedTask;
+      }
+    } catch (error: any) {
+      console.error("Invalid task data in localStorage: ", error.message);
+    }
+    return {
+      _id: "",
+      title: "",
+      description: "",
+      priority: "",
+      category: "",
+      dueDate: "",
+      createdDate: "",
+    };
   });
+
+  const [inputError, setInputError] = useState<string>("");
 
   useEffect(() => {
     localStorage.setItem("consistent-task", JSON.stringify(newTask));
@@ -90,6 +100,7 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
       const response = await updateTask(newTask);
       localStorage.removeItem("consistent-task");
       localStorage.removeItem("consistent-dueDate");
+      console.log("updateTask respone", response);
       return response ? response : null;
     } catch (error: any) {
       console.error(error.message);
@@ -101,12 +112,10 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
   const handleDialogCreateTaskfunc = async () => {
     console.log("newtask in handle create", newTask);
 
-    // const isValid = Object.values(newTask).every(value => value !== '' && value !== null && value !== undefined);
-
-    // if(!isValid){
-    //   console.log("input all fields");
-    //   return;
-    // }
+    if (!validateNewTask(newTask)) {
+      setInputError("Invalid task data, Please check the fields");
+      return;
+    }
 
     try {
       const { _id, createdDate, ...cleanedTypes } = newTask;
@@ -119,11 +128,14 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
     } catch (error: any) {
       console.error(error.message);
     }
+
+    setInputError("");
   };
 
   const handleValueChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    setInputError("");
     const { value, name } = e.target;
     setNewTask((prev) => ({ ...prev, [name]: value }));
   };
@@ -132,8 +144,15 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
     <div className="">
       <form>
         <div className="grid w-full items-center gap-4">
+          {inputError && (
+            <div>
+              <Label className="!text-red-500">{inputError}</Label>
+            </div>
+          )}
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">
+              Title <p className="text-red-500">*</p>
+            </Label>
             <Input
               id="title"
               placeholder="Name of task"
@@ -142,8 +161,11 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
               onChange={handleValueChange}
             />
           </div>
+
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">
+              Description<p className="text-red-500">*</p>
+            </Label>
             <Input
               id="description"
               placeholder="Description of task"
@@ -179,7 +201,9 @@ const TaskInputForm: React.FC<TypesOfTaskInputComponent> = ({
             </Popover>
           </div>
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="priority">Priority</Label>
+            <Label htmlFor="priority">
+              Priority <p className="text-red-500">*</p>
+            </Label>
             <Select
               value={newTask.priority}
               onValueChange={(value) =>

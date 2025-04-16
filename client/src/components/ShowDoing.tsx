@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ui/theme-provider";
 import TaskInputForm from "./TaskInputForm";
-import { TypesOfShowTaskComponent, TaskTypes } from "@/types/todoTypes";
+import { TypesOfShowTaskComponent } from "@/types/todoTypes";
 import { deleteById } from "@/services/toDoServices";
 import { getFormattedDate } from "@/lib/date";
 import { handleMoveTask } from "@/lib/moveTask";

@@ -4,8 +4,8 @@ export type TaskTypes = {
   description: string;
   priority: "low" | "medium" | "high";
   category: "todo" | "doing" | "done";
-  dueDate: Date | string;
-  createdDate: Date | string;
+  dueDate: Date;
+  createdDate: Date;
 };
 
 export type CleanerForTaskTypes = Omit<TaskTypes, "_id" | "createdDate">;
@@ -19,8 +19,8 @@ export type TypesOfTaskInputComponent = {
     description: string;
     priority: TaskTypes["priority"];
     category: TaskTypes["category"];
-    dueDate: Date | string;
-    createdDate: Date | string;
+    dueDate: Date;
+    createdDate: Date;
   };
   category?: TaskTypes["category"];
 };
