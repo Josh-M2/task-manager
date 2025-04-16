@@ -46,31 +46,34 @@ const MainPage: React.FC = () => {
       console.log("Socket connected! ID:", socket.id);
     });
 
-    socket.on("updateTask", (payload) => {
+    socket.on("updateTask", (payload: TaskTypes, isDelete: boolean) => {
       console.log("payload", payload);
+      console.log("isDelete", isDelete);
 
       //remove the list first that matches the payload
       setToDoList((prev) => prev.filter((task) => task._id !== payload._id));
       setDoingList((prev) => prev.filter((task) => task._id !== payload._id));
       setDoneList((prev) => prev.filter((task) => task._id !== payload._id));
 
-      switch (payload.category) {
-        case "todo":
-          setToDoList((prev) => [payload, ...prev]);
-          break;
+      if (isDelete === false) {
+        switch (payload.category) {
+          case "todo":
+            setToDoList((prev) => [payload, ...prev]);
+            break;
 
-        case "doing":
-          setDoingList((prev) => [payload, ...prev]);
+          case "doing":
+            setDoingList((prev) => [payload, ...prev]);
 
-          break;
+            break;
 
-        case "done":
-          setDoneList((prev) => [payload, ...prev]);
+          case "done":
+            setDoneList((prev) => [payload, ...prev]);
 
-          break;
+            break;
 
-        default:
-          break;
+          default:
+            break;
+        }
       }
     });
 

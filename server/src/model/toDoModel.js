@@ -8,7 +8,11 @@ const todoSchema = new Schema({
     required: true,
     trim: true,
   },
-  description: { type: String, reuired: true, trim: true },
+  description: {
+    type: String,
+    reuired: true,
+    trim: true,
+  },
   priority: {
     type: String,
     enum: ["low", "medium", "high"],
